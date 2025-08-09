@@ -35,15 +35,15 @@ class ModeloTermodinamico:
 				print(f"Los volúmenes de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidos y son iguales.")
 			else:
 				print(f"Los volúmenes de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidos pero no son iguales. Se recomienda revisar.")
-		
+
 		# Solo el estado_in tiene volumen definido
 		elif estado_in.v is not None:
 			estado_out.v = estado_in.v
-		
+
 		# Solo el estado_out tiene volumen definido
 		elif estado_out.v is not None:
 			estado_in.v = estado_out.v
-		
+
 		# Ninguno tiene volumen definido
 		else:
 			print(f"Ninguno de los estados {estado_in.nombre} ni {estado_out.nombre} tiene el volumen definido. Se requiere al menos uno.")
@@ -67,22 +67,22 @@ class ModeloTermodinamico:
 				print(f"{estado_out.nombre} esta definido")
 			else:
 				self.calcular_estado(estado_out)
-	
+
 		# Ambos están definidos
 		if estado_in.T is not None and estado_out.T is not None:
 			if estado_in.T == estado_out.T:
 				print(f"Las temperaturas de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidas y son iguales.")
 			else:
 				print(f"Las temperaturas de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidas pero no son iguales. Se recomienda revisar.")
-		
+
 		# Solo el estado_in tiene volumen definido
 		elif estado_in.T is not None:
 			estado_out.T = estado_in.T
-		
+
 		# Solo el estado_out tiene volumen definido
 		elif estado_out.T is not None:
 			estado_in.T = estado_out.T
-		
+
 		# Ninguno tiene volumen definido
 		else:
 			print(f"Ninguno de los estados {estado_in.nombre} ni {estado_out.nombre} tiene la temperatura definida. Se requiere al menos una.")
@@ -112,19 +112,19 @@ class ModeloTermodinamico:
 				print(f"Las presiones de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidas y son iguales.")
 			else:
 				print(f"Las presiones de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidas pero no son iguales. Se recomienda revisar.")
-		
+
 		# Solo el estado_in tiene volumen definido
 		elif estado_in.P is not None:
 			estado_out.P = estado_in.P
-		
+
 		# Solo el estado_out tiene volumen definido
 		elif estado_out.P is not None:
 			estado_in.P = estado_out.P
-		
+
 		# Ninguno tiene volumen definido
 		else:
 			print(f"Ninguno de los estados {estado_in.nombre} ni {estado_out.nombre} tiene la presión definida. Se requiere al menos una.")
-	
+
 	def resolver_isoentalpico(self, estado_in, estado_out):
 		'''
 		Esta función relaciona dos estados a través de un proceso isoentalpico o a entalpía constante.
@@ -151,15 +151,15 @@ class ModeloTermodinamico:
 				print(f"Las entalpias de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidas y son iguales.")
 			else:
 				print(f"Las entalpias de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidas pero no son iguales. Se recomienda revisar.")
-		
+
 		# Solo el estado_in tiene volumen definido
 		elif estado_in.h is not None:
 			estado_out.h = estado_in.h
-		
+
 		# Solo el estado_out tiene volumen definido
 		elif estado_out.h is not None:
 			estado_in.h = estado_out.h
-		
+
 		# Ninguno tiene volumen definido
 		else:
 			print(f"Ninguno de los estados {estado_in.nombre} ni {estado_out.nombre} tiene la entalpía definida. Se requiere al menos una.")
@@ -190,22 +190,22 @@ class ModeloTermodinamico:
 				print(f"Las entropías de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidas y son iguales.")
 			else:
 				print(f"Las entropías de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidas pero no son iguales. Se recomienda revisar.")
-		
+
 		# Solo el estado_in tiene volumen definido
 		elif estado_in.s is not None:
 			estado_out.s = estado_in.s
-		
+
 		# Solo el estado_out tiene volumen definido
 		elif estado_out.s is not None:
 			estado_in.s = estado_out.s
-		
+
 		# Ninguno tiene volumen definido
 		else:
 			print(f"Ninguno de los estados {estado_in.nombre} ni {estado_out.nombre} tiene la entropía definida. Se requiere al menos una.")
 
 	def resolver_politropico(self, estado_in, estado_out, n):
 		raise NotImplementedError()
-	
+
 	def resolver_in_or_out_calor(self, estado_in, estado_out, calor):
 		'''
 		Esta función relaciona dos estados a través de agregar o sacar calor a temperatura constante.
@@ -236,19 +236,19 @@ class ModeloTermodinamico:
 				print(f"Las temperaturas de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidas y son iguales.")
 			else:
 				print(f"Las temperaturas de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidas pero no son iguales. Se recomienda revisar.")
-		
+
 		# Solo el estado_in tiene temperatura definido
 		elif estado_in.T is not None:
 			estado_out.T = estado_in.T
-		
+
 		# Solo el estado_out tiene temperatura definido
 		elif estado_out.T is not None:
 			estado_in.T = estado_out.T
-		
+
 		# Ninguno tiene volumen definido
 		else:
 			print(f"Ninguno de los estados {estado_in.nombre} ni {estado_out.nombre} tiene la temperatura definida. Se requiere al menos una.")
-	
+
 	""" def resolver_interenfriamiento_recalentamiento(self, estado_in, estado_out, delta_T):
 		'''
 		Esta función relaciona dos estados a través de agregar o sacar calor con un cambio conocido de T.
@@ -300,7 +300,7 @@ class ModeloTermodinamico:
 					estado_in.P = estado_out.P
 					self.calcular_estado(estado_in)
 					self.calcular_estado(estado_out)
-		
+
 		# Solo el estado_in tiene temperatura definido
 		elif estado_in.T is not None:
 			estado_out.T = estado_in.T + delta_T
@@ -316,7 +316,7 @@ class ModeloTermodinamico:
 					estado_in.P = estado_out.P
 					self.calcular_estado(estado_in)
 					self.calcular_estado(estado_out)
-		
+
 		# Solo el estado_out tiene temperatura definido
 		elif estado_out.T is not None:
 			estado_in.T = estado_out.T - delta_T
@@ -332,7 +332,7 @@ class ModeloTermodinamico:
 					estado_in.P = estado_out.P
 					self.calcular_estado(estado_in)
 					self.calcular_estado(estado_out)
-		
+
 		# Ninguno tiene volumen definido
 		else:
 			print(f"Ninguno de los estados {estado_in.nombre} ni {estado_out.nombre} tiene la temperatura y la presion definida. Se requiere al menos una de cada una.")
@@ -351,8 +351,8 @@ class ModeloTermodinamico:
 			NotImplementedError: Si no se implementa en una subclase.
 		"""
 		raise NotImplementedError("Este método debe ser implementado en una subclase.")
-	
-	
+
+
 
 class ModeloGasIdeal(ModeloTermodinamico):
 	r"""
@@ -375,7 +375,7 @@ class ModeloGasIdeal(ModeloTermodinamico):
 		calcular_estado(estado, **kwargs): Calcula propiedades del estado con base en combinaciones de propiedades conocidas.
 	"""
 
-	def __init__(self, R_gas=287, cp=1005, cv = 0.718, T0=298.15, P0=101325): 
+	def __init__(self, R_gas=287, cp=1005, cv = 0.718, T0=298.15, P0=101325):
 		self.R_gas = float(R_gas)
 		self.cp = float(cp)
 		self.cv = float(cv) if cv is not None else self.cp - self.R_gas
@@ -410,7 +410,7 @@ class ModeloGasIdeal(ModeloTermodinamico):
 			v = np.asarray(v)
 			return (self.R_gas*estado_in.T)/v
 		return isotermico_ModeloGasIdeal
-	
+
 	def resolver_isobarico(self, estado_in, estado_out):
 		super().resolver_isobarico(estado_in, estado_out)
 		# Gas ideal
@@ -424,7 +424,7 @@ class ModeloGasIdeal(ModeloTermodinamico):
 			return (estado_in.P/self.R_gas)*v
 		return isobarico_ModeloGasIdeal
 
-	
+
 	def resolver_isoentalpico(self, estado_in, estado_out):
 		super().resolver_isoentalpico(estado_in, estado_out)
 		# Gas ideal
@@ -438,15 +438,15 @@ class ModeloGasIdeal(ModeloTermodinamico):
 				print(f"Las temperaturas de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidas y son iguales.")
 			else:
 				print(f"Las temperaturas de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidas pero no son iguales. Se recomienda revisar.")
-		
+
 		# Solo el estado_in tiene volumen definido
 		elif estado_in.T is not None:
 			estado_out.T = estado_in.T
-		
+
 		# Solo el estado_out tiene volumen definido
 		elif estado_out.T is not None:
 			estado_in.T = estado_out.T
-		
+
 		# Ninguno tiene volumen definido
 		else:
 			print(f"Ninguno de los estados {estado_in.nombre} ni {estado_out.nombre} tiene la temperatura definida. Se requiere al menos una.")
@@ -486,7 +486,7 @@ class ModeloGasIdeal(ModeloTermodinamico):
 				print("ERROR: No estan definidos los volumenes")
 				return None
 		return isoentropico_ModeloGasIdeal
-	
+
 
 	def resolver_in_or_out_calor(self, estado_in, estado_out, calor):
 		super().resolver_in_or_out_calor(estado_in, estado_out, calor)
@@ -500,19 +500,19 @@ class ModeloGasIdeal(ModeloTermodinamico):
 					print(f"Las entropias de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidos pero no son iguales. Son congruentes con el cambio esperado")
 				else:
 					print(f"Las entropias de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidos pero no son iguales. NO SON congruentes con el cambio esperado " + r"$\Delta$ s =" + f"{estado_in.s - estado_out.s}" + r"Q/T =" +f"{calor/estado_out.T}")
-		
+
 		# Solo el estado_in tiene volumen definido
 		elif estado_in.s is not None:
 			estado_out.s =  estado_in.s + calor/estado_out.T
 			self.calcular_estado(estado_in)
 			self.calcular_estado(estado_out)
-		
+
 		# Solo el estado_out tiene volumen definido
 		elif estado_out.s is not None:
 			estado_in.s = estado_out.s - calor/estado_out.T
 			self.calcular_estado(estado_in)
 			self.calcular_estado(estado_out)
-		
+
 		# Ninguno tiene volumen definido
 		else:
 			print(f"Ninguno de los estados {estado_in.nombre} ni {estado_out.nombre} puede ser definido.")
@@ -524,7 +524,7 @@ class ModeloGasIdeal(ModeloTermodinamico):
 			v = np.asarray(v)
 			return (self.R_gas*estado_in.T)/v
 		return in_or_out_calor_ModeloGasIdeal
-	
+
 	""" def resolver_interenfriamiento_recalentamiento(self, estado_in, estado_out, delta_T):
 		super().resolver_interenfriamiento_recalentamiento(estado_in, estado_out, delta_T)
 		# Gas ideal
@@ -545,7 +545,7 @@ class ModeloGasIdeal(ModeloTermodinamico):
 		"""
 		Calcula las propiedades del estado en función de combinaciones de propiedades conocidas.
 
-		Combinaciones aceptables: 
+		Combinaciones aceptables:
 		- (P, T)
 		- (P, v)
 		- (T, v)
@@ -556,14 +556,14 @@ class ModeloGasIdeal(ModeloTermodinamico):
 
 		Args:
 			estado (Estado): Instancia del estado a calcular.
-			**kwargs: Combinaciones posibles de propiedades como 'P', 'T', 'v', 'h', 's'. 
-		
+			**kwargs: Combinaciones posibles de propiedades como 'P', 'T', 'v', 'h', 's'.
+
 		Raises:
 			ValueError: Si la combinación de propiedades no es soportada.
 		"""
-		
+
 		# A continuacion se presentan los casos que va a revisar el programa si se tiene los datos y calcula los datos faltantes si es posible
-		
+
 		# Caso 1: Conozco Presión (P) y Temperatura (T)
 		if (estado.P is not None) and (estado.T is not None):
 			estado.v = self.R_gas * estado.T / estado.P
@@ -591,7 +591,7 @@ class ModeloGasIdeal(ModeloTermodinamico):
 			estado.u = self.cv*estado.T
 			estado.v = self.R_gas * estado.T / estado.P
 			estado.s = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log(estado.P / self.P0)
-		
+
 		# Caso 5: Conozco Entropía (s) y Volumen (v)
 		elif (estado.s is not None) and (estado.v is not None):
 			estado.T = self.T0*np.exp((1/self.cv)*(estado.s-self.R_gas*np.log(estado.v/self.v0)))
@@ -615,7 +615,7 @@ class ModeloGasIdeal(ModeloTermodinamico):
 
 		else:
 			print(f"Combinación de propiedades no soportada o insuficiente.")
-		
+
 from scipy.optimize import fsolve
 
 ######################################
@@ -642,15 +642,18 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 		Temperatura de referencia (K).
 	P0 : float, opcional
 		Presión de referencia (Pa).
+    x : float, opcional
+        Calidad, razón entre la masa de vapor y la masa total de la mezcla
 	"""
 
-	def __init__(self, a, b, R_gas=8.314, T0=298.15, P0=101325):
+	def __init__(self, a, b, R_gas=8.314, T0=298.15, P0=101325, x = 1):
 		self.a = a
 		self.b = b
 		self.R_gas = R_gas
 		self.T0 = T0
 		self.P0 = P0
 		self.v0 = self.R_gas * self.T0 / self.P0  # volumen molar de referencia (ideal)
+        self.x = x # Se asume que es un gas, por eso se empieza con x=1
 
 	def calcular_estado(self, estado, **kwargs):
 		"""
@@ -709,13 +712,35 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 		return ((P + self.a / v**2) * (v - self.b)) / self.R_gas
 
 	def _resolver_volumen(self, T, P):
-		"""Resuelve numéricamente el volumen molar usando fsolve."""
-		def f(v):
-			return P - self._presion(T, v)
-		v_guess = self.R_gas * T / P  # estimación inicial (gas ideal)
-		v_solution, = fsolve(f, v_guess)
-		return v_solution
+        """
+        args : T,P
+            Temperatura y Presión en ese punto
+        returns: v_solution
+            (np Array) Si es solo gas, devuelve el volumen del gas
+            Si es una mezcla líquido/gas devuelve una lista, de la forma
+            [v_líquido,v_gas.v_total]
+        """
+        if x == 1:
+		    """Resuelve numéricamente el volumen molar usando fsolve.
+               Esto es para casos que no tienen estados mixtos"""
+		    def f(v):
+		    	return P - self._presion(T, v)
+		    v_guess = self.R_gas * T / P  # estimación inicial (gas ideal)
+		    v_solution = fsolve(f, v_guess)
+        else:
+            """
+            La ecuación de Van der Waals puede ser expresada de esta forma:
+            PV**3 - (Pb+RT)*V**2 + a*V - a*b = 0.
+            Al resolver para el volumen se tienen tres soluciones:
+            La solución más grande corresponde al volumen del gas
+            La solución más pequeña corresponde al volumen del líquido
+            La solución del intermedio no tiene significado físico
+            """
+            sol = np.roots([P,-(P*self.b+self.R_gas*T), self.a, -self.a*self.b])
+            np.sort(sol)
+            v_solution = [sol[0], sol[2], sol[0]+sol[2]]
 
+		return v_solution
 	def _resolver_temperatura_desde_sv(self, s, v):
 		"""Calcula T desde entropía y volumen."""
 		T_guess = self.T0
