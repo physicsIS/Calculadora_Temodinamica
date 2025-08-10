@@ -16,6 +16,7 @@ class Estado:
 		u (float): Energía interna específica en J/kg.
 		h (float): Entalpía específica en J/kg.
 		s (float): Entropía específica en J/kg·K.
+        x (calidad): Calidad del fluido, constante
 	"""
 
 
@@ -24,12 +25,12 @@ class Estado:
 		Inicializa el estado con un modelo y un nombre.
 
 		Args:
-			modelo (ModeloTermodinamico): Modelo para calcular propiedades. 
+			modelo (ModeloTermodinamico): Modelo para calcular propiedades.
 			nombre (str, optional): Nombre del estado. Por defecto "". Corresponde al numero (int) del estado, mas que un nombre es un identificador.
 		"""
 		self.nombre = nombre
 		self.modelo = modelo
-		
+
 		# Propiedades termodinámicas
 		self.P = None # Presion Pa
 		self.T = None # Temperatura k
@@ -37,6 +38,7 @@ class Estado:
 		self.u = None # Energia interna especifica
 		self.h = None # Entalpia especifica
 		self.s = None # Entropia especifica
+		self.x = 1 # Calidad, por defecto es un gas
 
 	def actualizar(self, **kwargs):
 		"""
@@ -45,16 +47,19 @@ class Estado:
 		Args:
 			**kwargs: Propiedades conocidas (por ejemplo, P, T, s, h...).
 		"""
-		
-		# A continuacion se presentan los casos que va a revisar el programa si se tiene los datos y calcula los datos faltantes si es posible
-		
-		atributos_validos = ['P', 'T', 'v', 'u', 'h', 's']
-		for key, value in kwargs.items():
-			if key in atributos_validos:
-				setattr(self, key, value)
-			else:
-				raise AttributeError(f"'{key}' no es una propiedad válida del estado.")
 
+		# A continuacion se presentan los casos que va a revisar el programa si se tiene los datos y calcula los datos faltantes si es posible
+
+		atributos_validos = ['P', 'T', 'v', 'u', 'h', 's','x']
+		for key, value in kwargs.items():
+			if key not in atributos_validos:
+				raise AttributeError(f"'{key}' no es una propiedad válida del estado.")
+            
+            # Validación especial para calidad (x) en gases ideales
+			if key == 'x':
+				if self.modelo.__class__.__name__ == "ModeloGasIdeal" and value != 1:
+					raise AttributeError("Gas ideal no puede tener calidad diferente de 1")
+			setattr(self, key, value)
 	def calcular_propiedades(self):
 		'''
 		Calcula las propiedades termodinamicas de los estados del ciclo.
@@ -74,7 +79,7 @@ class Estado:
 		return (f"{self.nombre}: P={format_prop(self.P, 'Pa')}, T={format_prop(self.T, 'K')}, "
 				f"v={format_prop(self.v, 'm³/kg')}, u={format_prop(self.u, 'J/kg')}, "
 				f"h={format_prop(self.h, 'J/kg')}, s={format_prop(self.s, 'J/kg·K')}")
-	
+
 # Definición de la clase CicloTermodinamico
 class CicloTermodinamico:
 	"""
@@ -140,7 +145,7 @@ class CicloTermodinamico:
 		for i in range(self.n_values-2):
 			self.estados_internos[estado_in.nombre-1][i] = self._generar_estado_interno(P = P_values[i], T=T_values[i])
 
-		
+
 		self._indice_proceso_actual += 1
 
 	def proceso_isotermico(self, estado_in, estado_out):
@@ -175,7 +180,7 @@ class CicloTermodinamico:
 		T_values = result(v_values)
 		for i in range(self.n_values-2):
 			self.estados_internos[estado_in.nombre-1][i] = self._generar_estado_interno(v = v_values[i], T=T_values[i])
-		
+
 		self._indice_proceso_actual += 1
 
 	def proceso_isoentalipico(self, estado_in, estado_out):
@@ -192,7 +197,7 @@ class CicloTermodinamico:
 		P_values = result(v_values)
 		for i in range(self.n_values-2):
 			self.estados_internos[estado_in.nombre-1][i] = self._generar_estado_interno(v = v_values[i], P=P_values[i])
-		
+
 		self._indice_proceso_actual += 1
 
 	def proceso_isoentropico(self, estado_in, estado_out):
@@ -226,7 +231,7 @@ class CicloTermodinamico:
 		P_values = result(v_values)
 		for i in range(self.n_values-2):
 			self.estados_internos[estado_in.nombre-1][i] = self._generar_estado_interno(v=v_values[i], P = P_values[i])
-	
+
 		self._indice_proceso_actual += 1
 
 	"""def proceso_interenfriamiento_recalentamiento(self,estado_in, estado_out, delta_T):
@@ -243,7 +248,7 @@ class CicloTermodinamico:
 		T_values = result(v_values)
 		for i in range(self.n_values):
 			self.estados_internos[estado_in.nombre-1][i] = self._generar_estado_interno(v=v_values[i], T = T_values[i])
-	
+
 		self._indice_proceso_actual += 1 """
 
 
@@ -253,7 +258,7 @@ class CicloTermodinamico:
 		"""
 		for estado in self.estados:
 			print(estado.resumen())
-	
+
 	def generar_dataframes(self, opcion=1):
 			"""
 			Genera DataFrames con los estados del ciclo termodinámico.
@@ -324,7 +329,7 @@ class CicloTermodinamico:
 
 			else:
 				raise ValueError("Opción inválida. Debe ser 1 o 2.")
-			
+
 	def graficar_diagrama_Pv(self, nombre_ciclo="Ciclo termodinámico", ax=None):
 		"""
 		Grafica el diagrama P-v del ciclo termodinámico.
@@ -383,7 +388,7 @@ class CicloTermodinamico:
 		fig.tight_layout()
 
 		return fig, ax
-	
+
 	def graficar_diagrama_Ts(self, nombre_ciclo="Ciclo termodinámico", ax=None):
 		"""
 		Grafica el diagrama T-s del ciclo termodinámico.

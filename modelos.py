@@ -642,20 +642,17 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 		Temperatura de referencia (K).
 	P0 : float, opcional
 		Presión de referencia (Pa).
-    x : float, opcional
-        Calidad, razón entre la masa de vapor y la masa total de la mezcla
     MM : float, opcional
         Masa Molar de la sustancia
 	"""
 
-	def __init__(self, a, b, R_gas=8.314, T0=298.15, P0=101325, x = 1, MM = 0.018):
+	def __init__(self, a, b, R_gas=8.314, T0=298.15, P0=101325, MM = 0.018):
 		self.a = a
 		self.b = b
 		self.R_gas = R_gas
 		self.T0 = T0
 		self.P0 = P0
 		self.v0 = self.R_gas * self.T0 / self.P0  # volumen molar de referencia (ideal)
-		self.x = x # Se asume que es un gas, por eso se empieza con x=1
 		self.MM = MM
 
 	def calcular_estado(self, estado, **kwargs):
@@ -743,7 +740,7 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 		    	print(f"Usando Masa Molar del agua: {self.MM}")
 		    v_liquid = sol[0]/self.MM
 		    v_gas = sol[-1]/self.MM
-		    v_solution = [v_liquid, v_gas, v_liquid + self.x*(v_gas - v_liquid)]
+		    v_solution = [v_liquid, v_gas, v_liquid + estado.x*(v_gas - v_liquid)]
 
 		return v_solution
 	def _resolver_temperatura_desde_sv(self, s, v):
