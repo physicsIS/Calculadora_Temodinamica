@@ -16,7 +16,7 @@ class Estado:
 		u (float): Energía interna específica en J/kg.
 		h (float): Entalpía específica en J/kg.
 		s (float): Entropía específica en J/kg·K.
-        x (calidad): Calidad del fluido, constante
+		x (float): Calidad del fluido, cantidad del fluido que se encuentra en vapor, constante en cada estado.
 	"""
 
 
@@ -54,8 +54,8 @@ class Estado:
 		for key, value in kwargs.items():
 			if key not in atributos_validos:
 				raise AttributeError(f"'{key}' no es una propiedad válida del estado.")
-            
-            # Validación especial para calidad (x) en gases ideales
+			
+			# Validación especial para calidad (x) en gases ideales
 			if key == 'x':
 				if self.modelo.__class__.__name__ == "ModeloGasIdeal" and value != 1:
 					raise AttributeError("Gas ideal no puede tener calidad diferente de 1")

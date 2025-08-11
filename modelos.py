@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.integrate import quad
 
 class ModeloTermodinamico:
 	"""
@@ -365,9 +366,18 @@ class ModeloGasIdeal(ModeloTermodinamico):
 	$M_{gas}$: Masa molar del gas.
 
 	Args:
+		calores_constantes (bool): `True` si se desea usar calores constantes, `False` si se desean utilizar variables respecto a T.
 		R_gas (float): Constante del gas usado [J/kg·K].
-		cp (float): Capacidad calorífica específica a presión constante [J/kg·K].
-		cv (float): Capacidad calorífica específica a volumen constante [J/kg·K].
+		cp (float | callable | sympy.Expr): Capacidad calorífica específica a presión constante. 
+			Puede ser:
+				- Un valor constante (`float`) [J/kg·K].
+				- Una expresión matemática (ej. `sympy.Expr`) que dependa de variables como `T`.
+				- Una función (`callable`) que reciba la temperatura y devuelva el valor numérico.
+		cv (float | callable | sympy.Expr): Capacidad calorífica específica a volumen constante. 
+			Puede ser:
+				- Un valor constante (`float`) [J/kg·K].
+				- Una expresión matemática (ej. `sympy.Expr`) que dependa de variables como `T`.
+				- Una función (`callable`) que reciba la temperatura y devuelva el valor numérico.
 		T0 (float): Temperatura de referencia [K].
 		P0 (float): Presión de referencia [Pa].
 
@@ -375,10 +385,17 @@ class ModeloGasIdeal(ModeloTermodinamico):
 		calcular_estado(estado, **kwargs): Calcula propiedades del estado con base en combinaciones de propiedades conocidas.
 	"""
 
-	def __init__(self, R_gas=287, cp=1005, cv = 0.718, T0=298.15, P0=101325):
+	def __init__(self, calores_constantes = True, R_gas=287, cp=1005, cv = 0.718, T0=298.15, P0=101325):
+		self.calores_constantes = calores_constantes
 		self.R_gas = float(R_gas)
-		self.cp = float(cp)
-		self.cv = float(cv) if cv is not None else self.cp - self.R_gas
+		if self.calores_constantes == True:
+			self.cp = float(cp)
+			self.cv = float(cv) if cv is not None else self.cp - self.R_gas
+		elif self.calores_constantes == False:
+			self.cp = cp
+			self.cv = cv
+		else:
+			print("Se debe asignar si se desea trabajar con calores específicos constantes o variables dependientes de T")
 		self.T0 = float(T0)
 		self.P0 = float(P0)
 		self.v0 = self.R_gas*self.T0/self.P0  # volumen específico de referencia
@@ -564,57 +581,117 @@ class ModeloGasIdeal(ModeloTermodinamico):
 
 		# A continuacion se presentan los casos que va a revisar el programa si se tiene los datos y calcula los datos faltantes si es posible
 
-		# Caso 1: Conozco Presión (P) y Temperatura (T)
-		if (estado.P is not None) and (estado.T is not None):
-			estado.v = self.R_gas * estado.T / estado.P
-			estado.u = self.cv*estado.T
-			estado.h = self.cp * estado.T
-			estado.s = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log(estado.P / self.P0)
+		# Solucionador para calores especificos constantes
+		if self.calores_constantes == True:
 
-		# Caso 2: Conozco Presión (P) y Volumen (v)
-		elif (estado.P is not None) and (estado.v is not None):
-			estado.T = estado.P * estado.v / self.R_gas
-			estado.u = self.cv*estado.T
-			estado.h = self.cp * estado.T
-			estado.s = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log(estado.P / self.P0)
+			# Caso 1: Conozco Presión (P) y Temperatura (T)
+			if (estado.P is not None) and (estado.T is not None):
+				estado.v = self.R_gas * estado.T / estado.P
+				estado.u = self.cv*estado.T
+				estado.h = self.cp * estado.T
+				estado.s = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log(estado.P / self.P0)
 
-		# Caso 3: Conozco Temperatura (T) y Volumen (v)
-		elif (estado.T is not None) and (estado.v is not None):
-			estado.P = self.R_gas * estado.T / estado.v
-			estado.u = self.cv*estado.T
-			estado.h = self.cp * estado.T
-			estado.s = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log(estado.P / self.P0)
+			# Caso 2: Conozco Presión (P) y Volumen (v)
+			elif (estado.P is not None) and (estado.v is not None):
+				estado.T = estado.P * estado.v / self.R_gas
+				estado.u = self.cv*estado.T
+				estado.h = self.cp * estado.T
+				estado.s = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log(estado.P / self.P0)
 
-		# Caso 4: Conozco Presión (P) y Entalpía (h)
-		elif (estado.P is not None) and (estado.h is not None):
-			estado.T = estado.h / self.cp
-			estado.u = self.cv*estado.T
-			estado.v = self.R_gas * estado.T / estado.P
-			estado.s = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log(estado.P / self.P0)
+			# Caso 3: Conozco Temperatura (T) y Volumen (v)
+			elif (estado.T is not None) and (estado.v is not None):
+				estado.P = self.R_gas * estado.T / estado.v
+				estado.u = self.cv*estado.T
+				estado.h = self.cp * estado.T
+				estado.s = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log(estado.P / self.P0)
 
-		# Caso 5: Conozco Entropía (s) y Volumen (v)
-		elif (estado.s is not None) and (estado.v is not None):
-			estado.T = self.T0*np.exp((1/self.cv)*(estado.s-self.R_gas*np.log(estado.v/self.v0)))
-			estado.P = self.R_gas * estado.T / estado.v
-			estado.u = self.cv*estado.T
-			estado.h = self.cp * estado.T
+			# Caso 4: Conozco Presión (P) y Entalpía (h)
+			elif (estado.P is not None) and (estado.h is not None):
+				estado.T = estado.h / self.cp
+				estado.u = self.cv*estado.T
+				estado.v = self.R_gas * estado.T / estado.P
+				estado.s = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log(estado.P / self.P0)
 
-		# Caso 6: Conozco Entropía (s) y Presion (P)
-		elif (estado.s is not None) and (estado.P is not None):
-			estado.T = self.T0*np.exp((1/self.cp)*(estado.s+self.R_gas*np.log(estado.P/self.P0)))
-			estado.v = self.R_gas * estado.T / estado.P
-			estado.u = self.cv*estado.T
-			estado.h = self.cp * estado.T
+			# Caso 5: Conozco Entropía (s) y Volumen (v)
+			elif (estado.s is not None) and (estado.v is not None):
+				estado.T = self.T0*np.exp((1/self.cv)*(estado.s-self.R_gas*np.log(estado.v/self.v0)))
+				estado.P = self.R_gas * estado.T / estado.v
+				estado.u = self.cv*estado.T
+				estado.h = self.cp * estado.T
 
-		# Caso 7: Conozco Entropía (s) y Temperatura (T)
-		elif (estado.s is not None) and (estado.T is not None):
-			estado.P = self.P0*np.exp((1/self.R_gas)*(self.cp*np.log(estado.T/self.T0)-estado.s))
-			estado.v = self.R_gas * estado.T / estado.P
-			estado.u = self.cv*estado.T
-			estado.h = self.cp * estado.T
+			# Caso 6: Conozco Entropía (s) y Presion (P)
+			elif (estado.s is not None) and (estado.P is not None):
+				estado.T = self.T0*np.exp((1/self.cp)*(estado.s+self.R_gas*np.log(estado.P/self.P0)))
+				estado.v = self.R_gas * estado.T / estado.P
+				estado.u = self.cv*estado.T
+				estado.h = self.cp * estado.T
 
-		else:
-			print(f"Combinación de propiedades no soportada o insuficiente.")
+			# Caso 7: Conozco Entropía (s) y Temperatura (T)
+			elif (estado.s is not None) and (estado.T is not None):
+				estado.P = self.P0*np.exp((1/self.R_gas)*(self.cp*np.log(estado.T/self.T0)-estado.s))
+				estado.v = self.R_gas * estado.T / estado.P
+				estado.u = self.cv*estado.T
+				estado.h = self.cp * estado.T
+
+			else:
+				print(f"Combinación de propiedades no soportada o insuficiente.")
+
+		# Solucionador para calores especificos variables dependientes de la temperatura
+		elif self.calores_constantes == False:
+
+			# Caso 1: Conozco Presión (P) y Temperatura (T)
+			if (estado.P is not None) and (estado.T is not None):
+				estado.v = self.R_gas * estado.T / estado.P
+				estado.u = quad(self.cv, self.T0, estado.T)
+				estado.h = quad(self.cp, self.T0, estado.T)
+				estado.s = quad(self.cp,self.T0,estado.T) - self.R_gas * np.log(estado.P / self.P0)
+
+			# Caso 2: Conozco Presión (P) y Volumen (v)
+			elif (estado.P is not None) and (estado.v is not None):
+				estado.T = estado.P * estado.v / self.R_gas
+				estado.u = quad(self.cv, self.T0, estado.T)
+				estado.h = quad(self.cp, self.T0, estado.T)
+				estado.s = quad(self.cp,self.T0,estado.T) - self.R_gas * np.log(estado.P / self.P0)
+
+			# Caso 3: Conozco Temperatura (T) y Volumen (v)
+			elif (estado.T is not None) and (estado.v is not None):
+				estado.P = self.R_gas * estado.T / estado.v
+				estado.u = quad(self.cv, self.T0, estado.T)
+				estado.h = quad(self.cp, self.T0, estado.T)
+				estado.s = quad(self.cp,self.T0,estado.T) - self.R_gas * np.log(estado.P / self.P0)
+
+			# Caso 4: Conozco Presión (P) y Entalpía (h)
+			elif (estado.P is not None) and (estado.h is not None):
+				estado.T = estado.h / self.cp
+				estado.u = quad(self.cv, self.T0, estado.T)
+				estado.v = self.R_gas * estado.T / estado.P
+				estado.s = quad(self.cp,self.T0,estado.T) - self.R_gas * np.log(estado.P / self.P0)
+
+			# Caso 5: Conozco Entropía (s) y Volumen (v)
+			elif (estado.s is not None) and (estado.v is not None):
+				estado.T = self.T0*np.exp((1/self.cv)*(estado.s-self.R_gas*np.log(estado.v/self.v0)))
+				estado.P = self.R_gas * estado.T / estado.v
+				estado.u = quad(self.cv, self.T0, estado.T)
+				estado.h = quad(self.cp, self.T0, estado.T)
+
+			# Caso 6: Conozco Entropía (s) y Presion (P)
+			elif (estado.s is not None) and (estado.P is not None):
+				estado.T = self.T0*np.exp((1/self.cp)*(estado.s+self.R_gas*np.log(estado.P/self.P0)))
+				estado.v = self.R_gas * estado.T / estado.P
+				estado.u = quad(self.cv, self.T0, estado.T)
+				estado.h = quad(self.cp, self.T0, estado.T)
+
+			# Caso 7: Conozco Entropía (s) y Temperatura (T)
+			elif (estado.s is not None) and (estado.T is not None):
+				estado.P = self.P0*np.exp((1/self.R_gas)*(self.cp*np.log(estado.T/self.T0)-estado.s))
+				estado.v = self.R_gas * estado.T / estado.P
+				estado.u = quad(self.cv, self.T0, estado.T)
+				estado.h = quad(self.cp, self.T0, estado.T)
+
+			else:
+				print(f"Combinación de propiedades no soportada o insuficiente.")
+
+			
 
 from scipy.optimize import fsolve
 
@@ -642,8 +719,8 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 		Temperatura de referencia (K).
 	P0 : float, opcional
 		Presión de referencia (Pa).
-    MM : float, opcional
-        Masa Molar de la sustancia
+	MM : float, opcional
+		Masa Molar de la sustancia
 	"""
 
 	def __init__(self, a, b, R_gas=8.314, T0=298.15, P0=101325, MM = 0.018):
@@ -714,33 +791,33 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 	def _resolver_volumen(self, T, P):
 		"""
 		args : T,P
-		    Temperatura y Presión en ese punto
+			Temperatura y Presión en ese punto
 		returns: v_solution
-		    (np Array) Si es solo gas, devuelve el volumen del gas
-		    Si es una mezcla líquido/gas devuelve una lista, de la forma
-		    [v_líquido,v_gas.v_total]
+			(np Array) Si es solo gas, devuelve el volumen del gas
+			Si es una mezcla líquido/gas devuelve una lista, de la forma
+			[v_líquido,v_gas.v_total]
 		"""
 		if self.x == 1:
 		# Resuelve numéricamente el volumen molar usando fsolve
-        #Esto es para casos que no tienen estados mixtos
-		    def f(v):
-		    	return P - self._presion(T, v)
-		    v_guess = self.R_gas * T / P  # estimación inicial (gas ideal)
-		    v_solution = fsolve(f, v_guess)
+		#Esto es para casos que no tienen estados mixtos
+			def f(v):
+				return P - self._presion(T, v)
+			v_guess = self.R_gas * T / P  # estimación inicial (gas ideal)
+			v_solution = fsolve(f, v_guess)
 		else:
 		#La ecuación de Van der Waals puede ser expresada de esta forma:
-        #PV**3 - (Pb+RT)*V**2 + a*V - a*b = 0.
-        #Al resolver para el volumen se tienen tres soluciones:
-        #La solución más grande corresponde al volumen del gas
-        #La solución más pequeña corresponde al volumen del líquido
-        #La solución del intermedio no tiene significado físico
-		    sol = np.roots([P,-(P*self.b+self.R_gas*T), self.a, -self.a*self.b])
-		    sol.sort()
-		    if self.MM == 0.018:
-		    	print(f"Usando Masa Molar del agua: {self.MM}")
-		    v_liquid = sol[0]/self.MM
-		    v_gas = sol[-1]/self.MM
-		    v_solution = [v_liquid, v_gas, v_liquid + estado.x*(v_gas - v_liquid)]
+		#PV**3 - (Pb+RT)*V**2 + a*V - a*b = 0.
+		#Al resolver para el volumen se tienen tres soluciones:
+		#La solución más grande corresponde al volumen del gas
+		#La solución más pequeña corresponde al volumen del líquido
+		#La solución del intermedio no tiene significado físico
+			sol = np.roots([P,-(P*self.b+self.R_gas*T), self.a, -self.a*self.b])
+			sol.sort()
+			if self.MM == 0.018:
+				print(f"Usando Masa Molar del agua: {self.MM}")
+			v_liquid = sol[0]/self.MM
+			v_gas = sol[-1]/self.MM
+			v_solution = [v_liquid, v_gas, v_liquid + estado.x*(v_gas - v_liquid)]
 
 		return v_solution
 	def _resolver_temperatura_desde_sv(self, s, v):
