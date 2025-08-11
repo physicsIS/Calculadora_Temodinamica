@@ -587,28 +587,28 @@ class ModeloGasIdeal(ModeloTermodinamico):
 			# Caso 1: Conozco Presión (P) y Temperatura (T)
 			if (estado.P is not None) and (estado.T is not None):
 				estado.v = self.R_gas * estado.T / estado.P
-				estado.u = self.cv*estado.T
-				estado.h = self.cp * estado.T
+				estado.u = self.cv*(estado.T - self.T0)
+				estado.h = self.cp * (estado.T - self.T0)
 				estado.s = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log(estado.P / self.P0)
 
 			# Caso 2: Conozco Presión (P) y Volumen (v)
 			elif (estado.P is not None) and (estado.v is not None):
 				estado.T = estado.P * estado.v / self.R_gas
-				estado.u = self.cv*estado.T
-				estado.h = self.cp * estado.T
+				estado.u = self.cv*(estado.T - self.T0)
+				estado.h = self.cp * (estado.T - self.T0)
 				estado.s = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log(estado.P / self.P0)
 
 			# Caso 3: Conozco Temperatura (T) y Volumen (v)
 			elif (estado.T is not None) and (estado.v is not None):
 				estado.P = self.R_gas * estado.T / estado.v
-				estado.u = self.cv*estado.T
-				estado.h = self.cp * estado.T
+				estado.u = self.cv*(estado.T - self.T0)
+				estado.h = self.cp * (estado.T - self.T0)
 				estado.s = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log(estado.P / self.P0)
 
 			# Caso 4: Conozco Presión (P) y Entalpía (h)
 			elif (estado.P is not None) and (estado.h is not None):
 				estado.T = estado.h / self.cp
-				estado.u = self.cv*estado.T
+				estado.u = self.cv*(estado.T - self.T0)
 				estado.v = self.R_gas * estado.T / estado.P
 				estado.s = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log(estado.P / self.P0)
 
@@ -616,22 +616,22 @@ class ModeloGasIdeal(ModeloTermodinamico):
 			elif (estado.s is not None) and (estado.v is not None):
 				estado.T = self.T0*np.exp((1/self.cv)*(estado.s-self.R_gas*np.log(estado.v/self.v0)))
 				estado.P = self.R_gas * estado.T / estado.v
-				estado.u = self.cv*estado.T
-				estado.h = self.cp * estado.T
+				estado.u = self.cv*(estado.T - self.T0)
+				estado.h = self.cp * (estado.T - self.T0)
 
 			# Caso 6: Conozco Entropía (s) y Presion (P)
 			elif (estado.s is not None) and (estado.P is not None):
 				estado.T = self.T0*np.exp((1/self.cp)*(estado.s+self.R_gas*np.log(estado.P/self.P0)))
 				estado.v = self.R_gas * estado.T / estado.P
-				estado.u = self.cv*estado.T
-				estado.h = self.cp * estado.T
+				estado.u = self.cv*(estado.T - self.T0)
+				estado.h = self.cp * (estado.T - self.T0)
 
 			# Caso 7: Conozco Entropía (s) y Temperatura (T)
 			elif (estado.s is not None) and (estado.T is not None):
 				estado.P = self.P0*np.exp((1/self.R_gas)*(self.cp*np.log(estado.T/self.T0)-estado.s))
 				estado.v = self.R_gas * estado.T / estado.P
-				estado.u = self.cv*estado.T
-				estado.h = self.cp * estado.T
+				estado.u = self.cv*(estado.T - self.T0)
+				estado.h = self.cp * (estado.T - self.T0)
 
 			else:
 				print(f"Combinación de propiedades no soportada o insuficiente.")
