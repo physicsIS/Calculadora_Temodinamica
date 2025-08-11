@@ -710,11 +710,11 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 	Parámetros
 	----------
 	a : float
-		Constante de atracción (Pa·m⁶/mol²).
+		Constante de atracción (Pa·m⁶/kg²).
 	b : float
-		Volumen excluido por mol (m³/mol).
+		Volumen excluido por mol (m³/kg).
 	R_gas : float, opcional
-		Constante del gas (por mol), por defecto 8.314 J/mol·K.
+		Constante del gas 
 	T0 : float, opcional
 		Temperatura de referencia (K).
 	P0 : float, opcional
@@ -732,53 +732,174 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 		self.v0 = self.R_gas * self.T0 / self.P0  # volumen molar de referencia (ideal)
 		self.MM = MM
 
-	def calcular_estado(self, estado, **kwargs):
+	def calcular_estado(self, estado):
 		"""
-		Calcula propiedades termodinámicas a partir de combinaciones válidas.
+		Calcula las propiedades del estado para un gas de Van der Waals
+		en función de combinaciones de propiedades conocidas.
 
-		Soporta combinaciones como: (P, T), (T, v), (P, v), (s, v), (s, P), (T, s), etc.
+		Combinaciones aceptables:
+		- (P, T)
+		- (P, v)
+		- (T, v)
+		- (P, h)
+		- (s, v)
+		- (s, P)
+		- (T, s)
+		- (P, x)  # Calidad
+		- (T, x)  # Calidad
+
+		Args:
+			estado (Estado): Instancia del estado a calcular.
+
+		Raises:
+			ValueError: Si la combinación de propiedades no es soportada o insuficiente.
 		"""
 
-		keys = kwargs.keys()
+	
 
-		if 'P' in keys and 'T' in keys:
-			estado.P = kwargs['P']
-			estado.T = kwargs['T']
-			estado.v = self._resolver_volumen(estado.T, estado.P)
-			self._calcular_propiedades(estado)
+		# Función auxiliar para resolver T desde P y v usando Van der Waals
+		def calcular_T(P, v):
+			return (P + self.a / v**2) * (v - self.b) / self.R_gas
 
-		elif 'T' in keys and 'v' in keys:
-			estado.T = kwargs['T']
-			estado.v = kwargs['v']
-			estado.P = self._presion(estado.T, estado.v)
-			self._calcular_propiedades(estado)
+		# Función auxiliar para resolver P desde T y v
+		def calcular_P(T, v):
+			return self.R_gas * T / (v - self.b) - self.a / v**2
+		
+		def resolver_volumen(self,estado, T, P):
+			"""
+			args : T,P
+				Temperatura y Presión en ese punto
+			returns: v_solution
+				(np Array) Si es solo gas, devuelve el volumen del gas
+				Si es una mezcla líquido/gas devuelve una lista, de la forma
+				[v_líquido,v_gas.v_total]
+			"""
+			if self.x == 1:
+			# Resuelve numéricamente el volumen molar usando fsolve
+			#Esto es para casos que no tienen estados mixtos
+				def f(v):
+					return P - self._presion(T, v)
+				v_guess = self.R_gas * T / P  # estimación inicial (gas ideal)
+				v_solution = fsolve(f, v_guess)
+			else:
+			#La ecuación de Van der Waals puede ser expresada de esta forma:
+			#PV**3 - (Pb+RT)*V**2 + a*V - a*b = 0.
+			#Al resolver para el volumen se tienen tres soluciones:
+			#La solución más grande corresponde al volumen del gas
+			#La solución más pequeña corresponde al volumen del líquido
+			#La solución del intermedio no tiene significado físico
+				sol = np.roots([P,-(P*self.b+self.R_gas*T), self.a, -self.a*self.b])
+				sol.sort()
+				if self.MM == 0.018:
+					print(f"Usando Masa Molar del agua: {self.MM}")
+				v_liquid = sol[0]/self.MM
+				v_gas = sol[-1]/self.MM
+				v_solution = [v_liquid, v_gas, v_liquid + estado.x*(v_gas - v_liquid)]
 
-		elif 'P' in keys and 'v' in keys:
-			estado.P = kwargs['P']
-			estado.v = kwargs['v']
-			estado.T = self._temperatura(estado.P, estado.v)
-			self._calcular_propiedades(estado)
+			return v_solution
 
-		elif 'P' in keys and 'h' in keys:
-			estado.P = kwargs['P']
-			estado.h = kwargs['h']
-			raise NotImplementedError("Cálculo desde (P, h) no implementado para Van der Waals.")
+		
+		# Ahora los casos:
+		if self.calores_constantes == True:
 
-		elif 's' in keys and 'v' in keys:
-			estado.s = kwargs['s']
-			estado.v = kwargs['v']
-			estado.T = self._resolver_temperatura_desde_sv(estado.s, estado.v)
-			estado.P = self._presion(estado.T, estado.v)
-			self._calcular_propiedades(estado)
+			# Caso 1: (P, T)
+			if (estado.P is not None) and (estado.T is not None):
+				estado.v = calcular_v(estado.P, estado.T)
+				estado.u = self.cv * (estado.T - self.T0) - self.a / estado.v
+				estado.h = estado.u + estado.P * estado.v
+				estado.s = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log((estado.v - self.b) / (self.v0 - self.b))
 
-		elif 's' in keys and 'P' in keys:
-			raise NotImplementedError("Cálculo desde (s, P) no implementado para Van der Waals.")
+			# Caso 2: (P, v)
+			elif (estado.P is not None) and (estado.v is not None):
+				estado.T = calcular_T(estado.P, estado.v)
+				estado.u = self.cv * (estado.T - self.T0) - self.a / estado.v
+				estado.h = estado.u + estado.P * estado.v
+				estado.s = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log((estado.v - self.b) / (self.v0 - self.b))
 
-		elif 's' in keys and 'T' in keys:
-			raise NotImplementedError("Cálculo desde (s, T) no implementado para Van der Waals.")
+			# Caso 3: (T, v)
+			elif (estado.T is not None) and (estado.v is not None):
+				estado.P = calcular_P(estado.T, estado.v)
+				estado.u = self.cv * (estado.T - self.T0) - self.a / estado.v
+				estado.h = estado.u + estado.P * estado.v
+				estado.s = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log((estado.v - self.b) / (self.v0 - self.b))
 
-		else:
-			raise ValueError("Combinación de propiedades no soportada o insuficiente.")
+			# Caso 4: (P, h)
+			elif (estado.P is not None) and (estado.h is not None):
+				# Para este caso es necesario un método iterativo para encontrar T:
+				from scipy.optimize import root_scalar
+
+				def f(T):
+					v = calcular_v(estado.P, T)
+					u = self.cv * (T - self.T0) - self.a / v
+					h_calc = u + estado.P * v
+					return h_calc - estado.h
+
+				sol = root_scalar(f, bracket=[self.T0, 2000], method='brentq')
+				if not sol.converged:
+					raise ValueError("No se pudo encontrar temperatura para P y h dados.")
+				estado.T = sol.root
+				estado.v = calcular_v(estado.P, estado.T)
+				estado.u = self.cv * (estado.T - self.T0) - self.a / estado.v
+				estado.s = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log((estado.v - self.b) / (self.v0 - self.b))
+
+			# Caso 5: (s, v)
+			elif (estado.s is not None) and (estado.v is not None):
+				# Se debe encontrar T que satisface s:
+				from scipy.optimize import root_scalar
+
+				def f(T):
+					s_calc = self.cp * np.log(T / self.T0) - self.R_gas * np.log((estado.v - self.b) / (self.v0 - self.b))
+					return s_calc - estado.s
+
+				sol = root_scalar(f, bracket=[self.T0*0.1, self.T0*10], method='brentq')
+				if not sol.converged:
+					raise ValueError("No se pudo encontrar temperatura para s y v dados.")
+				estado.T = sol.root
+				estado.P = calcular_P(estado.T, estado.v)
+				estado.u = self.cv * (estado.T - self.T0) - self.a / estado.v
+				estado.h = estado.u + estado.P * estado.v
+
+			# Caso 6: (s, P)
+			elif (estado.s is not None) and (estado.P is not None):
+				from scipy.optimize import root_scalar
+
+				def f(T):
+					v = calcular_v(estado.P, T)
+					s_calc = self.cp * np.log(T / self.T0) - self.R * np.log((v - self.b) / (self.v0 - self.b))
+					return s_calc - estado.s
+
+				sol = root_scalar(f, bracket=[self.T0*0.1, self.T0*10], method='brentq')
+				if not sol.converged:
+					raise ValueError("No se pudo encontrar temperatura para s y P dados.")
+				estado.T = sol.root
+				estado.v = calcular_v(estado.P, estado.T)
+				estado.u = self.cv * (estado.T - self.T0) - self.a / estado.v
+				estado.h = estado.u + estado.P * estado.v
+
+			# Caso 7: (T, s)
+			elif (estado.T is not None) and (estado.s is not None):
+				from scipy.optimize import root_scalar
+
+				def f(P):
+					v = calcular_v(P, estado.T)
+					s_calc = self.cp * np.log(estado.T / self.T0) - self.R_gas * np.log((v - self.b) / (self.v0 - self.b))
+					return s_calc - estado.s
+
+				# Buscamos P en un rango razonable
+				sol = root_scalar(f, bracket=[1e3, 1e8], method='brentq')
+				if not sol.converged:
+					raise ValueError("No se pudo encontrar presión para T y s dados.")
+				estado.P = sol.root
+				estado.v = calcular_v(estado.P, estado.T)
+				estado.u = self.cv * (estado.T - self.T0) - self.a / estado.v
+				estado.h = estado.u + estado.P * estado.v
+
+			else:
+				raise ValueError("Combinación de propiedades no soportada o insuficiente.")
+
+
+		elif self.calores_constantes == False:
+			print("No se ha implementado")
 
 	def _presion(self, T, v):
 		"""Devuelve la presión (Pa) usando la ecuación de Van der Waals."""
@@ -788,38 +909,7 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 		"""Devuelve la temperatura (K) a partir de presión y volumen."""
 		return ((P + self.a / v**2) * (v - self.b)) / self.R_gas
 
-	def _resolver_volumen(self, T, P):
-		"""
-		args : T,P
-			Temperatura y Presión en ese punto
-		returns: v_solution
-			(np Array) Si es solo gas, devuelve el volumen del gas
-			Si es una mezcla líquido/gas devuelve una lista, de la forma
-			[v_líquido,v_gas.v_total]
-		"""
-		if self.x == 1:
-		# Resuelve numéricamente el volumen molar usando fsolve
-		#Esto es para casos que no tienen estados mixtos
-			def f(v):
-				return P - self._presion(T, v)
-			v_guess = self.R_gas * T / P  # estimación inicial (gas ideal)
-			v_solution = fsolve(f, v_guess)
-		else:
-		#La ecuación de Van der Waals puede ser expresada de esta forma:
-		#PV**3 - (Pb+RT)*V**2 + a*V - a*b = 0.
-		#Al resolver para el volumen se tienen tres soluciones:
-		#La solución más grande corresponde al volumen del gas
-		#La solución más pequeña corresponde al volumen del líquido
-		#La solución del intermedio no tiene significado físico
-			sol = np.roots([P,-(P*self.b+self.R_gas*T), self.a, -self.a*self.b])
-			sol.sort()
-			if self.MM == 0.018:
-				print(f"Usando Masa Molar del agua: {self.MM}")
-			v_liquid = sol[0]/self.MM
-			v_gas = sol[-1]/self.MM
-			v_solution = [v_liquid, v_gas, v_liquid + estado.x*(v_gas - v_liquid)]
-
-		return v_solution
+	
 	def _resolver_temperatura_desde_sv(self, s, v):
 		"""Calcula T desde entropía y volumen."""
 		T_guess = self.T0
