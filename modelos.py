@@ -715,6 +715,16 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 		Volumen excluido por mol (m³/kg).
 	R_gas : float, opcional
 		Constante del gas 
+	cp (float | callable | sympy.Expr): Capacidad calorífica específica a presión constante. 
+			Puede ser:
+				- Un valor constante (`float`) [J/kg·K].
+				- Una expresión matemática (ej. `sympy.Expr`) que dependa de variables como `T`.
+				- Una función (`callable`) que reciba la temperatura y devuelva el valor numérico.
+	cv (float | callable | sympy.Expr): Capacidad calorífica específica a volumen constante. 
+			Puede ser:
+				- Un valor constante (`float`) [J/kg·K].
+				- Una expresión matemática (ej. `sympy.Expr`) que dependa de variables como `T`.
+				- Una función (`callable`) que reciba la temperatura y devuelva el valor numérico.
 	T0 : float, opcional
 		Temperatura de referencia (K).
 	P0 : float, opcional
@@ -723,10 +733,12 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 		Masa Molar de la sustancia
 	"""
 
-	def __init__(self, a, b, R_gas=8.314, T0=298.15, P0=101325, MM = 0.018):
+	def __init__(self, a, b, R_gas=8.314, cp, cv, T0=298.15, P0=101325, MM = 0.018):
 		self.a = a
 		self.b = b
 		self.R_gas = R_gas
+		self.cp = cp
+		self.cv = cv
 		self.T0 = T0
 		self.P0 = P0
 		self.v0 = self.R_gas * self.T0 / self.P0  # volumen molar de referencia (ideal)
