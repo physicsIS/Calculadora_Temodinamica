@@ -16,7 +16,7 @@ class Estado:
 		u (float): Energía interna específica en J/kg.
 		h (float): Entalpía específica en J/kg.
 		s (float): Entropía específica en J/kg·K.
-        x (calidad): Calidad del fluido, constante
+		x (float): Calidad del fluido, cantidad del fluido que se encuentra en vapor, constante en cada estado.
 	"""
 
 
@@ -54,8 +54,8 @@ class Estado:
 		for key, value in kwargs.items():
 			if key not in atributos_validos:
 				raise AttributeError(f"'{key}' no es una propiedad válida del estado.")
-            
-            # Validación especial para calidad (x) en gases ideales
+			
+			# Validación especial para calidad (x) en gases ideales
 			if key == 'x':
 				if self.modelo.__class__.__name__ == "ModeloGasIdeal" and value != 1:
 					raise AttributeError("Gas ideal no puede tener calidad diferente de 1")
@@ -79,6 +79,15 @@ class Estado:
 		return (f"{self.nombre}: P={format_prop(self.P, 'Pa')}, T={format_prop(self.T, 'K')}, "
 				f"v={format_prop(self.v, 'm³/kg')}, u={format_prop(self.u, 'J/kg')}, "
 				f"h={format_prop(self.h, 'J/kg')}, s={format_prop(self.s, 'J/kg·K')}")
+
+	def _get_states(self):
+		"""
+		Devuelve un diccionario con el nombre como llave y un diccionario con los valores de las variables en ese estado
+
+		Returns:
+			dict: diccionario con int de llave y diccionario de valor
+		"""
+		return {self.nombre : {"P" : self.P, "T" : self.T, "v" : self.v, "u" : self.u, "h" : self.h, "s" : self.s}}
 
 # Definición de la clase CicloTermodinamico
 class CicloTermodinamico:
@@ -447,3 +456,53 @@ class CicloTermodinamico:
 		fig.tight_layout()
 
 		return fig, ax
+
+	def calcular_eficiencia(self):
+		"""
+		Calcula la eficiencia térmica del ciclo termodinámico.
+		
+		Returns:
+		float: Eficiencia térmica del ciclo (0 a 1).
+		"""
+		n = len(self.estados)
+		works = []  # Trabajo en cada proceso
+		heats = []  # Calor en cada proceso
+		
+		for i in range(n):
+			# Estados inicial y final del proceso
+			estado_in = self.estados[i]
+			estado_out = self.estados[(i + 1) % n]
+        
+			# Calcular ΔU entre estados
+			delta_U = estado_out.u - estado_in.u
+        
+			 # Obtener estados internos del proceso (sin valores nulos)
+			internals = [e for e in self.estados_internos[i] if e is not None]
+			all_states = [estado_in] + internals + [estado_out]
+        
+			# Calcular trabajo  usando integral trapezoidal
+			W = 0
+			for j in range(len(all_states) - 1):
+				P_avg = (all_states[j].P + all_states[j + 1].P) / 2
+				delta_V = all_states[j + 1].v - all_states[j].v
+				W += P_avg * delta_V
+        
+			# Calcular calor usando Primera Ley (Q = ΔU + W)
+			Q = delta_U + W
+        
+			works.append(W)
+			heats.append(Q)
+
+		# Calcular trabajo neto (suma de trabajos positivos - suma de trabajos negativos)
+		net_work = sum(W for W in works)
+		
+		# Calcular calor total de entrada (solo valores positivos)
+		heat_input = sum(Q for Q in heats if Q > 0)
+		
+		# Calcular eficiencia (evitar división por cero)
+		if heat_input > 0:
+			efficiency = net_work / heat_input
+		else:
+			efficiency = 0
+		print(f"La eficiencia del ciclo es: {efficiency:.3f}")
+		return efficiency

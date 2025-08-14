@@ -385,7 +385,7 @@ class ModeloGasIdeal(ModeloTermodinamico):
 		calcular_estado(estado, **kwargs): Calcula propiedades del estado con base en combinaciones de propiedades conocidas.
 	"""
 
-	def __init__(self, calores_constantes = True, R_gas=287, cp=1005, cv = 0.718, T0=298.15, P0=101325):
+	def __init__(self, calores_constantes = True, R_gas=287, cp = 1005, cv = 0.718, T0=298.15, P0=101325):
 		self.calores_constantes = calores_constantes
 		self.R_gas = float(R_gas)
 		if self.calores_constantes == True:
@@ -733,7 +733,7 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 		Masa Molar de la sustancia
 	"""
 
-	def __init__(self, a, b, R_gas=8.314, cp, cv, T0=298.15, P0=101325, MM = 0.018):
+	def __init__(self, a, b, R_gas=8.314, cp = 1005, cv = 0.718, T0=298.15, P0=101325, MM = 0.018):
 		self.a = a
 		self.b = b
 		self.R_gas = R_gas
