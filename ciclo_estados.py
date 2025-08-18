@@ -457,9 +457,9 @@ class CicloTermodinamico:
 
 		return fig, ax
 
-	def calcular_eficiencia(self):
+	def calcular_eficiencia_num(self):
 		"""
-		Calcula la eficiencia térmica del ciclo termodinámico.
+		Calcula la eficiencia térmica del ciclo termodinámico por medio de integral trapezoidal
 		
 		Returns:
 		float: Eficiencia térmica del ciclo (0 a 1).
@@ -504,5 +504,91 @@ class CicloTermodinamico:
 			efficiency = net_work / heat_input
 		else:
 			efficiency = 0
-		print(f"La eficiencia del ciclo es: {efficiency:.3f}")
+		print(f"La eficiencia del ciclo por método numérico es: {efficiency:.3f}")
+		return efficiency	
+        
+	def calcular_eficiencia(self,modelo, carnot = False):
+		"""
+		Calcula la eficiencia térmica del ciclo termodinámico.
+		
+		Returns:
+		float: Eficiencia térmica del ciclo (0 a 1).
+		"""
+		n = len(self.estados)
+		works = []  # Trabajo en cada proceso
+		heats = []  # Calor en cada proceso
+
+		if carnot:
+			T_values = [state.T for state in self.estados]
+			T_values.sort()
+			T_High = T_values[n-1]
+			T_low = T_values[0]
+			efficiency = 1 - T_low/T_High
+			print(f"La eficiencia del ciclo de Carnot: {efficiency:.3f}")
+			return efficiency
+		for i in range(n):
+			# Estados inicial y final del proceso
+			estado_in = self.estados[i]
+			estado_out = self.estados[(i + 1) % n]
+        
+			# Calcular ΔU entre estados
+			delta_U = estado_out.u - estado_in.u
+        
+			 # Obtener estados internos del proceso (sin valores nulos)
+			internals = [e for e in self.estados_internos[i] if e is not None]
+			all_states = [estado_in] + internals + [estado_out]
+            
+			# Calcular trabajo  dependiendo del tipo de modelo
+			W = 0
+			if modelo.__class__.__name__ == "ModeloGasIdeal":
+				if np.allclose(estado_in.P,estado_out.P):
+					''' 
+                        Proceso Isobárico
+                        W = P*(Vf - Vi)
+					'''
+					W = estado_in.P*(estado_out.v - estado_in.v)
+					Q = estado_out.h - estado_in.h
+				elif np.allclose(estado_in.T,estado_out.T):
+					''' 
+                        Proceso Isotérmico
+                        W = R*T*ln(Vf/Vi)
+					'''
+					W = modelo.R_gas*estado_in.T*np.log(estado_out.v/estado_in.v)
+					Q = W
+				elif np.allclose(estado_in.s, estado_out.s):
+					'''
+                        Proceso Isoentrópico
+                        W = -deltaU
+					'''
+					W = -delta_U
+					Q = 0
+				elif np.allclose(estado_in.h, estado_out.h):
+					'''
+                        Proceso Isoentálpico
+                        W = cp*(Tf - Ti)
+					'''
+					W = 0 #modelo.cp*(estado_out.T - estado_in.T)
+					Q = delta_U
+				else:
+					Q = delta_U + W
+                
+			elif modelo.__class__.__name__=="ModeloVanDerWaals":
+				pass  
+        
+        
+			works.append(W)
+			heats.append(Q)
+
+		# Calcular trabajo neto (suma de trabajos positivos - suma de trabajos negativos)
+		net_work = sum(W for W in works)
+		print(works)
+		print(heats)
+		# Calcular calor total de entrada (solo valores positivos)
+		heat_input = sum(Q for Q in heats if Q > 0)
+		# Calcular eficiencia (evitar división por cero)
+		if heat_input > 0:
+			efficiency = net_work / heat_input
+		else:
+			efficiency = 0
+		print(f"La eficiencia del ciclo: {efficiency:.3f}")
 		return efficiency

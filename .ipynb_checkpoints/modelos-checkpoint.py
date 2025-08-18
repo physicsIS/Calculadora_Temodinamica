@@ -19,13 +19,13 @@ class ModeloTermodinamico:
 			estado_out (Estado): Estado de salida en la secuencia del ciclo.
 		'''
 		# Definir alguno de los estados involucrados si es posible:
-		if sum(value is not None for value in vars(estado_in).values()) >= 2:
-			if sum(value is not None for value in vars(estado_in).values()) ==6:
+		if sum(value is not None for value in vars(estado_in).values()) >= 3:
+			if sum(value is not None for value in vars(estado_in).values()) ==7:
 				print(f"{estado_in.nombre} esta definido")
 			else:
 				self.calcular_estado(estado_in)
-		elif sum(value is not None for value in vars(estado_out).values()) >= 2:
-			if sum(value is not None for value in vars(estado_out).values()) ==6:
+		elif sum(value is not None for value in vars(estado_out).values()) >= 3:
+			if sum(value is not None for value in vars(estado_out).values()) ==7:
 				print(f"{estado_out.nombre} esta definido")
 			else:
 				self.calcular_estado(estado_out)
@@ -58,13 +58,13 @@ class ModeloTermodinamico:
 			estado_out (Estado): Estado de salida en la secuencia del ciclo.
 		'''
 		# Definir alguno de los estados involucrados si es posible:
-		if sum(value is not None for value in vars(estado_in).values()) >= 2:
-			if sum(value is not None for value in vars(estado_in).values()) ==6:
+		if sum(value is not None for value in vars(estado_in).values()) >= 3:
+			if sum(value is not None for value in vars(estado_in).values()) ==7:
 				print(f"{estado_in.nombre} esta definido")
 			else:
 				self.calcular_estado(estado_in)
-		elif sum(value is not None for value in vars(estado_out).values()) >= 2:
-			if sum(value is not None for value in vars(estado_out).values()) ==6:
+		elif sum(value is not None for value in vars(estado_out).values()) >= 3:
+			if sum(value is not None for value in vars(estado_out).values()) ==7:
 				print(f"{estado_out.nombre} esta definido")
 			else:
 				self.calcular_estado(estado_out)
@@ -76,11 +76,11 @@ class ModeloTermodinamico:
 			else:
 				print(f"Las temperaturas de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidas pero no son iguales. Se recomienda revisar.")
 
-		# Solo el estado_in tiene volumen definido
+		# Solo el estado_in tiene temperatura definido
 		elif estado_in.T is not None:
 			estado_out.T = estado_in.T
 
-		# Solo el estado_out tiene volumen definido
+		# Solo el estado_out tiene temperatura definido
 		elif estado_out.T is not None:
 			estado_in.T = estado_out.T
 
@@ -97,13 +97,13 @@ class ModeloTermodinamico:
 			estado_out (Estado): Estado de salida en la secuencia del ciclo.
 		'''
 		# Definir alguno de los estados involucrados si es posible:
-		if sum(value is not None for value in vars(estado_in).values()) >= 2:
-			if sum(value is not None for value in vars(estado_in).values()) ==6:
+		if sum(value is not None for value in vars(estado_in).values()) >= 3:
+			if sum(value is not None for value in vars(estado_in).values()) ==7:
 				print(f"{estado_in.nombre} esta definido")
 			else:
 				self.calcular_estado(estado_in)
-		elif sum(value is not None for value in vars(estado_out).values()) >= 2:
-			if sum(value is not None for value in vars(estado_out).values()) ==6:
+		elif sum(value is not None for value in vars(estado_out).values()) >= 3:
+			if sum(value is not None for value in vars(estado_out).values()) ==7:
 				print(f"{estado_out.nombre} esta definido")
 			else:
 				self.calcular_estado(estado_out)
@@ -135,13 +135,13 @@ class ModeloTermodinamico:
 			estado_out (Estado): Estado de salida en la secuencia del ciclo.
 		'''
 		# Definir alguno de los estados involucrados si es posible:
-		if sum(value is not None for value in vars(estado_in).values()) >= 2:
-			if sum(value is not None for value in vars(estado_in).values()) ==6:
+		if sum(value is not None for value in vars(estado_in).values()) >= 3:
+			if sum(value is not None for value in vars(estado_in).values()) ==7:
 				print(f"{estado_in.nombre} esta definido")
 			else:
 				self.calcular_estado(estado_in)
 		elif sum(value is not None for value in vars(estado_out).values()) >= 2:
-			if sum(value is not None for value in vars(estado_out).values()) ==6:
+			if sum(value is not None for value in vars(estado_out).values()) ==7:
 				print(f"{estado_out.nombre} esta definido")
 			else:
 				self.calcular_estado(estado_out)
@@ -174,13 +174,13 @@ class ModeloTermodinamico:
 			estado_out (Estado): Estado de salida en la secuencia del ciclo.
 		'''
 		# Definir alguno de los estados involucrados si es posible:
-		if sum(value is not None for value in vars(estado_in).values()) >= 2:
-			if sum(value is not None for value in vars(estado_in).values()) ==6:
+		if sum(value is not None for value in vars(estado_in).values()) >= 3:
+			if sum(value is not None for value in vars(estado_in).values()) ==7:
 				print(f"{estado_in.nombre} esta definido")
 			else:
 				self.calcular_estado(estado_in)
 		elif sum(value is not None for value in vars(estado_out).values()) >= 2:
-			if sum(value is not None for value in vars(estado_out).values()) ==6:
+			if sum(value is not None for value in vars(estado_out).values()) ==7:
 				print(f"{estado_out.nombre} esta definido")
 			else:
 				self.calcular_estado(estado_out)
@@ -438,7 +438,7 @@ class ModeloGasIdeal(ModeloTermodinamico):
 			Retorna la temperatura T para un gas ideal en un proceso isobarico, dado v.
 			"""
 			v = np.asarray(v)
-			return (estado_in.P/self.R_gas)*v
+			return (estado_in.P*v)/self.R_gas
 		return isobarico_ModeloGasIdeal
 
 
@@ -511,7 +511,7 @@ class ModeloGasIdeal(ModeloTermodinamico):
 		# La entropia
 		if estado_in.s is not None and estado_out.s is not None:
 			if estado_in.s == estado_out.s:
-				print(f"Las entropias de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidos y son iguales. Esto es un error, agragar o sacar calor cambia la entropia.")
+				print(f"Las entropias de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidos y son iguales. Esto es un error, agregar o sacar calor cambia la entropia.")
 			else:
 				if (estado_in.s -(estado_out.s + calor/estado_out.T)< 1e-6):
 					print(f"Las entropias de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidos pero no son iguales. Son congruentes con el cambio esperado")
@@ -931,6 +931,9 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 		T_solution, = fsolve(f, T_guess)
 		return T_solution
 
+	def resolver_politropico(self, estado_in, estado_out, n, **kwargs):
+		super().resolver_politropico(estado_in, estado_out)
+
 	def _calcular_propiedades(self, estado):
 		"""
 		Calcula u, h, s a partir de P, T y v. Se asume gas monoatómico (Cv = 3/2 R).
@@ -941,3 +944,143 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 		estado.u = Cv * estado.T - self.a / estado.v
 		estado.h = estado.u + estado.P * estado.v
 		estado.s = self.R_gas * np.log((estado.T / self.T0) * ((estado.v - self.b) / self.v0))
+
+	def resolver_isocorico(self, estado_in, estado_out):
+		super().resolver_isocorico(estado_in, estado_out)
+		# Van der Waals
+		self.calcular_estado(estado_in)
+		self.calcular_estado(estado_out)
+		def isocorico_ModeloVanDerWaals(P):
+			"""
+			Retorna la temperatura T para un gas VanDerWaals en un proceso isocórico, dado P.
+			"""
+			P = np.asarray(P)  # Asegura que P se pueda vectorizar
+			return (1/self.R_gas)*(P + self.a/(estado_in.v)**2)*(estado_in.v - self.b)
+		return isocorico_ModeloVanDerWaals
+
+	def resolver_isotermico(self, estado_in, estado_out, **kwargs):
+		super().resolver_isotermico(estado_in, estado_out)
+		# Van der Waals
+		self.calcular_estado(estado_in)
+		self.calcular_estado(estado_out)
+		def isotermico_ModeloVanDerWaals(v):
+			"""
+			Retorna la presión P para un gas VanDerWaals en un proceso isotermico, dado v.
+			"""
+			v = np.asarray(v)
+			return (self.R_gas*estado_in.T)/(estado_in.v - self.b) - self.a/(estado_in.v)**2
+		return isotermico_ModeloVanDerWaals
+
+	def resolver_isobarico(self, estado_in, estado_out):
+		super().resolver_isobarico(estado_in, estado_out)
+		# Van der Waals
+		self.calcular_estado(estado_in)
+		self.calcular_estado(estado_out)
+		def isobarico_ModeloVanDerWaals(v):
+			"""
+			Retorna la temperatura T para un gas VanDerWaals en un proceso isobarico, dado v.
+			"""
+			v = np.asarray(v)
+			return (1/self.R_gas)*(estado_in.P + self.a/(v)**2)*(v - self.b)
+		return isobarico_ModeloVanDerWaals
+
+
+	def resolver_isoentalpico(self, estado_in, estado_out):
+		super().resolver_isoentalpico(estado_in, estado_out)
+		# Gas ideal #################Cocinando################falta revision
+		self.calcular_estado(estado_in)
+		self.calcular_estado(estado_out)
+		# En gases ideales, los procesos isoentalpicos siguen isotermas
+
+		# Ambos están definidos
+		if estado_in.T is not None and estado_out.T is not None:
+			if estado_in.T == estado_out.T:
+				print(f"Las temperaturas de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidas y son iguales.")
+			else:
+				print(f"Las temperaturas de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidas pero no son iguales. Se recomienda revisar.")
+
+		# Solo el estado_in tiene volumen definido
+		elif estado_in.T is not None:
+			estado_out.T = estado_in.T
+
+		# Solo el estado_out tiene volumen definido
+		elif estado_out.T is not None:
+			estado_in.T = estado_out.T
+
+		# Ninguno tiene volumen definido
+		else:
+			print(f"Ninguno de los estados {estado_in.nombre} ni {estado_out.nombre} tiene la temperatura definida. Se requiere al menos una.")
+
+		def isoentalpico_ModeloVanDerWaals(v):
+			"""
+			Retorna la presión P para un gas VanDerWaals en un proceso isoentalpico -> isotermico, dado v.
+			"""
+			v = np.asarray(v)
+			return (self.R_gas*estado_in.T)/(estado_in.v - self.b) - self.a/(estado_in.v)**2
+		return isoentalpico_VanDerWaals
+
+	def resolver_isoentropico(self, estado_in, estado_out):
+		super().resolver_isoentropico(estado_in, estado_out)
+		# Van der Waals falta revision
+		self.calcular_estado(estado_in)
+		self.calcular_estado(estado_out)
+		def isoentropico_ModeloVanDerWaals(v):
+			"""
+			Retorna la presión P para un gas VanDerWaals en un proceso isoentropico, dado v.
+			"""
+			# Ambos están definidos
+			v = np.asarray(v)
+			if estado_in.v is not None:
+				if estado_in.P is not None:
+					return estado_in.P*(estado_in.v/v)**(self.cp/self.cv)
+				else:
+					print("ERROR: No estan definida la presion en el estado de entrada")
+					return None
+			elif estado_out.v is not None:
+				if estado_out.P is not None:
+					return  estado_out.P*(estado_out.v/v)**(self.cp/self.cv)
+				else:
+					print("ERROR: No estan definida la presion en el estado de salida")
+					return None
+			else:
+				print("ERROR: No estan definidos los volumenes")
+				return None
+		return isoentropico_ModeloVanDerWaals
+
+
+	def resolver_in_or_out_calor(self, estado_in, estado_out, calor):
+		super().resolver_in_or_out_calor(estado_in, estado_out, calor)
+		# Gas ideal #################Cocinando################falta revision
+		# La entropia
+		if estado_in.s is not None and estado_out.s is not None:
+			if estado_in.s == estado_out.s:
+				print(f"Las entropias de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidos y son iguales. Esto es un error, agregar o sacar calor cambia la entropia.")
+			else:
+				if (estado_in.s -(estado_out.s + calor/estado_out.T)< 1e-6):
+					print(f"Las entropias de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidos pero no son iguales. Son congruentes con el cambio esperado")
+				else:
+					print(f"Las entropias de los estados {estado_in.nombre} y {estado_out.nombre} fueron definidos pero no son iguales. NO SON congruentes con el cambio esperado " + r"$\Delta$ s =" + f"{estado_in.s - estado_out.s}" + r"Q/T =" +f"{calor/estado_out.T}")
+
+		# Solo el estado_in tiene volumen definido
+		elif estado_in.s is not None:
+			estado_out.s =  estado_in.s + calor/estado_out.T
+			self.calcular_estado(estado_in)
+			self.calcular_estado(estado_out)
+
+		# Solo el estado_out tiene volumen definido
+		elif estado_out.s is not None:
+			estado_in.s = estado_out.s - calor/estado_out.T
+			self.calcular_estado(estado_in)
+			self.calcular_estado(estado_out)
+
+		# Ninguno tiene volumen definido
+		else:
+			print(f"Ninguno de los estados {estado_in.nombre} ni {estado_out.nombre} puede ser definido.")
+
+		def in_or_out_calor_ModeloVanDerWaals(v):
+			"""
+			Retorna la presión P para un gas VanDerWaals en un proceso de adicion o rechazo de calor -> isotermico, dado v.
+			"""
+				v = np.asarray(v)
+			return (self.R_gas*estado_in.T)/(estado_in.v - self.b) - self.a/(estado_in.v)**2
+		return in_or_out_calor_ModeloVanDerWaals
