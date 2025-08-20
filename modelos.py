@@ -987,7 +987,7 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 
 	def resolver_isoentalpico(self, estado_in, estado_out):
 		super().resolver_isoentalpico(estado_in, estado_out)
-		# Gas ideal #################Cocinando################falta revision
+		# Van der Waals
 		self.calcular_estado(estado_in)
 		self.calcular_estado(estado_out)
 		# En gases ideales, los procesos isoentalpicos siguen isotermas
@@ -1021,9 +1021,10 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 
 	def resolver_isoentropico(self, estado_in, estado_out):
 		super().resolver_isoentropico(estado_in, estado_out)
-		# Van der Waals falta revision
+		# Van der Waals
 		self.calcular_estado(estado_in)
 		self.calcular_estado(estado_out)
+        gamma = self.cp/self.cv
 		def isoentropico_ModeloVanDerWaals(v):
 			"""
 			Retorna la presión P para un gas VanDerWaals en un proceso isoentropico, dado v.
@@ -1031,16 +1032,16 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 			# Ambos están definidos
 			v = np.asarray(v)
 			if estado_in.v is not None:
-				if estado_in.P is not None:
-					return estado_in.P*(estado_in.v/v)**(self.cp/self.cv)
+				if (estado_in.T is not None):
+					return (self.R_gas*estado_in.T*(estadp_in.T - self.b)**(gamma))/(v-self.b)**gamma - self.a/(v)**2
 				else:
-					print("ERROR: No estan definida la presion en el estado de entrada")
+					print("ERROR: No estan definida la temperatura en el estado de entrada")
 					return None
 			elif estado_out.v is not None:
-				if estado_out.P is not None:
-					return  estado_out.P*(estado_out.v/v)**(self.cp/self.cv)
+				if estado_out.T is not None:
+					return  (self.R_gas*estado_out.T*(estado_out.T - self.b)**(gamma))/(v-self.b)**gamma - self.a/(v)**2
 				else:
-					print("ERROR: No estan definida la presion en el estado de salida")
+					print("ERROR: No estan definida la temperatura en el estado de salida")
 					return None
 			else:
 				print("ERROR: No estan definidos los volumenes")
@@ -1050,7 +1051,7 @@ class ModeloVanDerWaals(ModeloTermodinamico):
 
 	def resolver_in_or_out_calor(self, estado_in, estado_out, calor):
 		super().resolver_in_or_out_calor(estado_in, estado_out, calor)
-		# Gas ideal #################Cocinando################falta revision
+		# Van der Waals
 		# La entropia
 		if estado_in.s is not None and estado_out.s is not None:
 			if estado_in.s == estado_out.s:
